@@ -1,0 +1,55 @@
+services:
+  app:
+    container_name: golang_container
+    env_file:
+      - config.env
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      
+      - HTTP_HOST=${HTTP_HOST}
+      - HTTP_PORT=${HTTP_PORT}
+      - HTTP_R_TIMEOUT=${HTTP_R_TIMEOUT}
+      - HTTP_W_TIMEOUT=${HTTP_W_TIMEOUT}
+      - HTTP_I_TIMEOUT=${HTTP_I_TIMEOUT}
+      - HANDLER_GET_TIMEOUT=${HANDLER_GET_TIMEOUT}
+      - HANDLER_POST_TIMEOUT=${HANDLER_POST_TIMEOUT}
+    tty: true
+    build: .
+    ports:
+      - 8080:8080
+    restart: on-failure
+    volumes:
+      - .:/app
+    depends_on:
+      - postgresdb
+    command: go run cmd/app/main.go && go test -v ./tests
+    networks:
+      - local
+
+  postgresdb:
+    image: postgres:latest
+    container_name: postgres_container
+    env_file:
+      - config.env
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    ports:
+      - '1234:5432'
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    networks:
+      - local
+
+volumes:
+  pg_data:
+
+networks:
+  local:
+    driver: bridge
